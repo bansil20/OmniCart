@@ -67,6 +67,10 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'OmniCart API is live & operational!' });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'OmniCart API Server is running smoothly!' });
 });
