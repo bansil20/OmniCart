@@ -8,4 +8,4 @@ Copyright (c) 2026 OmniCart Inc. All Rights Reserved.
 2. **Strict Prohibition**: Unauthorized copying, cloning, reverse engineering, redistribution, publishing, or public display of any portion of this repository or project code is strictly prohibited without explicit written permission from OmniCart Inc.
 3. **No Open Source License**: This project is private and NOT open-source software.
 
-For inquiries or formal licensing permissions, contact support@omnicart.com.
+For inquiries or formal licensing permissions, contact bansilpabari02@gmail.com.
