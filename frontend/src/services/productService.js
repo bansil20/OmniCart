@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5000/api/products';
+import { API_BASE_URL as BASE } from '../config/api.js';
+
+const API_BASE_URL = `${BASE}/products`;
 
 export const getSellerProducts = async (token) => {
   const response = await fetch(`${API_BASE_URL}/seller`, {

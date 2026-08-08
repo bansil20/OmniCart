@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5000/api/categories';
+import { API_BASE_URL as BASE } from '../config/api.js';
+
+const API_BASE_URL = `${BASE}/categories`;
 
 export const getCategories = async (token) => {
   const headers = {};

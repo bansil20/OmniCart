@@ -4,6 +4,7 @@ import { FaShoppingCart, FaHeart, FaRegHeart, FaStore, FaShieldAlt, FaArrowLeft,
 import { useWishlistContext } from '../context/WishlistContext.jsx';
 import { useCartContext } from '../context/CartContext.jsx';
 import Path from '../utils/const/Path.js';
+import { API_BASE_URL } from '../config/api.js';
 
 function ItemScreen() {
     const { id } = useParams();
@@ -19,7 +20,7 @@ function ItemScreen() {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`http://localhost:5000/api/products/${id}`);
+                const res = await fetch(`${API_BASE_URL}/products/${id}`);
                 const data = await res.json();
                 if (res.ok && data.product) {
                     setProduct(data.product);

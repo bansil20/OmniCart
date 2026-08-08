@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCartContext } from "../context/CartContext.jsx";
 import { useWishlistContext } from "../context/WishlistContext.jsx";
 import { useCompareContext } from "../context/CompareContext.jsx";
+import { API_BASE_URL } from "../config/api.js";
 
 function Header() {
     const [scrolled, setScrolled] = useState(false);
@@ -60,7 +61,7 @@ function Header() {
         const timer = setTimeout(async () => {
             setIsSearching(true);
             try {
-                let searchUrl = `http://localhost:5000/api/products?search=${encodeURIComponent(searchQuery.trim())}`;
+                let searchUrl = `${API_BASE_URL}/products?search=${encodeURIComponent(searchQuery.trim())}`;
                 if (user?.role === 'seller') {
                     const sellerId = user._id || user.id;
                     if (sellerId) {

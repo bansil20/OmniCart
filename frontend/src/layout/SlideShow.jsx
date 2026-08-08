@@ -5,6 +5,7 @@ import slides from "../utils/const/slide.js";
 import AppString from "../utils/const/AppString.jsx";
 import AnimatedBtn from "../components/Button/AnimatedBtn.jsx";
 import Path from "../utils/const/Path.js";
+import { API_BASE_URL } from "../config/api.js";
 
 function SlideShow() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ function SlideShow() {
   useEffect(() => {
     const fetchLatestProducts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/products");
+        const res = await fetch(`${API_BASE_URL}/products`);
         const data = await res.json();
         if (res.ok && data.products && data.products.length > 0) {
           // Take top 5 newly added products

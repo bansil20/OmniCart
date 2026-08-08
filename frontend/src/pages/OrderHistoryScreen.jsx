@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import Path from '../utils/const/Path.js';
 import { downloadOrderInvoicePDF } from '../utils/pdfInvoiceGenerator.js';
+import { API_BASE_URL } from '../config/api.js';
 import {
   FaShoppingBag,
   FaFileDownload,
@@ -24,7 +25,7 @@ function OrderHistoryScreen() {
     const fetchMyOrders = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/orders/my-orders', {
+        const res = await fetch(`${API_BASE_URL}/orders/my-orders`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

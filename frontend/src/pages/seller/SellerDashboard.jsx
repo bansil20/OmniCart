@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { getSellerProducts, createProduct, updateProduct, deleteProduct } from '../../services/productService.js';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/categoryService.js';
 import { downloadOrderInvoicePDF } from '../../utils/pdfInvoiceGenerator.js';
+import { API_BASE_URL } from '../../config/api.js';
 import {
   FaStore,
   FaBoxes,
@@ -106,7 +107,7 @@ const SellerDashboard = () => {
       setCategories(uniqueCats);
 
       // Fetch Seller Sales Orders
-      const orderRes = await fetch('http://localhost:5000/api/orders/seller', {
+      const orderRes = await fetch(`${API_BASE_URL}/orders/seller`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const orderData = await orderRes.json();

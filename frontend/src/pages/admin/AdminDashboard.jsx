@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { API_BASE_URL } from '../../config/api.js';
 import {
   FaUsers,
   FaStore,
@@ -33,7 +34,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const res = await fetch('http://localhost:5000/api/auth/users', {
+      const res = await fetch(`${API_BASE_URL}/auth/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
   // Update user role
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/users/${userId}/role`, {
+      const res = await fetch(`${API_BASE_URL}/auth/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ const AdminDashboard = () => {
 
     setIsSubmittingSeller(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/users', {
+      const res = await fetch(`${API_BASE_URL}/auth/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

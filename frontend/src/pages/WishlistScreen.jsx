@@ -3,13 +3,14 @@ import { useWishlistContext } from '../context/WishlistContext.jsx';
 import { useCartContext } from '../context/CartContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import Path from '../utils/const/Path.js';
+import { API_BASE_URL } from '../config/api.js';
 import ItemCard from '../components/Card/ItemCard.jsx';
 import { FaHeart, FaShoppingCart, FaTrash, FaTag, FaArrowRight } from 'react-icons/fa';
 
 function WishlistScreen() {
-  const { wishlist, toggleWishlist } = useWishlistContext();
-  const { addToCart } = useCartContext();
   const navigate = useNavigate();
+  const { wishlist, toggleWishlist } = useWishlist();
+  const { addToCart } = useCartContext();
 
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ function WishlistScreen() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_BASE_URL}/products`);
         const data = await res.json();
         if (res.ok && data.products) {
           setAllProducts(data.products);

@@ -6,6 +6,7 @@ import EyeView from "../layout/EyeView.jsx";
 import { useNavigate } from "react-router-dom";
 import Path from "../utils/const/Path.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { API_BASE_URL } from "../config/api.js";
 
 function HomeScreen() {
     const navigate = useNavigate();
@@ -31,7 +32,7 @@ function HomeScreen() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/products');
+                const res = await fetch(`${API_BASE_URL}/products`);
                 const data = await res.json();
                 if (res.ok && data.products) {
                     setRealProducts(data.products);

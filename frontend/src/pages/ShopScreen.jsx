@@ -2,20 +2,22 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ItemCard from "../components/Card/ItemCard.jsx";
 import EyeView from "../layout/EyeView.jsx";
-import { FaSearch, FaTag, FaStore, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTag, FaTimes } from "react-icons/fa";
+import { API_BASE_URL } from "../config/api.js";
 
 function ShopScreen() {
-  const { state } = useLocation();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const state = location.state;
+
+  const [products, setProducts] = useState(state?.items || []);
+  const [loading, setLoading] = useState(false);
   const [searchFilter, setSearchFilter] = useState(state?.searchQuery || '');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [eyeOpen, setEyeOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Sync state searchQuery if navigated with search
   useEffect(() => {
-    if (state?.searchQuery !== undefined) {
+    if (state?.searchQuery) {
       setSearchFilter(state.searchQuery);
     }
   }, [state?.searchQuery]);
@@ -23,7 +25,7 @@ function ShopScreen() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      let url = 'http://localhost:5000/api/products';
+      let url = `${API_BASE_URL}/products`;
       const params = new URLSearchParams();
 
       if (searchFilter.trim()) {

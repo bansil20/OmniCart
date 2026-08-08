@@ -3,6 +3,7 @@ import { useCartContext } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import Path from '../utils/const/Path.js';
+import { API_BASE_URL } from '../config/api.js';
 import {
   FaMapMarkerAlt,
   FaCreditCard,
@@ -215,7 +216,7 @@ function CheckoutScreen() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers,
         body: JSON.stringify(orderPayload),
@@ -247,7 +248,7 @@ function CheckoutScreen() {
 
     try {
       // 1. Call backend to create Razorpay Order ID
-      const res = await fetch('http://localhost:5000/api/payment/razorpay/create-order', {
+      const res = await fetch(`${API_BASE_URL}/payment/razorpay/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: grandTotal }),
