@@ -130,7 +130,7 @@ function ItemCard({ item }) {
 
                 {/* PRICE */}
                 <div className="text-sm flex items-center justify-center gap-2">
-                    <span className="font-extrabold text-blue-900">
+                    <span className="font-black text-[#004bb5]">
                         ₹{finalPrice.toFixed(2)}
                     </span>
                     {hasDiscount && (

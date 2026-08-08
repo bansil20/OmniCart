@@ -37,16 +37,26 @@ function SlideShow() {
   const activeSlides =
     latestProducts.length > 0
       ? latestProducts.map((prod) => {
-          const hasDiscount =
-            prod.discountPrice &&
-            Number(prod.discountPrice) > 0 &&
-            Number(prod.discountPrice) < Number(prod.price);
+          const originalPrice = Number(prod.price || 0);
+          const discVal = Number(prod.discountPrice || 0);
+          const hasDiscount = discVal > 0 && discVal < originalPrice;
+          
+          // Calculate final selling price (MRP - discount amount if small discount value, else direct discount price)
+          let finalPrice = originalPrice;
+          if (hasDiscount) {
+            if (discVal < (originalPrice / 2)) {
+              finalPrice = originalPrice - discVal; // e.g., 799 - 49 = 750
+            } else {
+              finalPrice = discVal; // e.g., 750 directly
+            }
+          }
+
           return {
             id: prod._id,
             tag: `Smart Products`,
             title1: prod.name,
-            finalPrice: hasDiscount ? Number(prod.discountPrice) : Number(prod.price),
-            originalPrice: Number(prod.price),
+            finalPrice,
+            originalPrice,
             hasDiscount,
             image: prod.imageUrl,
             isRealProduct: true,
@@ -121,12 +131,12 @@ function SlideShow() {
 
           {/* PRICE DISPLAY WITH STRIKETHROUGH */}
           {currentSlide.finalPrice !== undefined ? (
-            <div className="text-xl md:text-3xl flex items-center gap-3 font-bold mt-3">
-              <span className="text-blue-950 font-extrabold">
+            <div className="text-2xl md:text-4xl flex items-center gap-3 font-bold mt-3">
+              <span className="text-[#004bb5] font-black tracking-tight">
                 ₹{Number(currentSlide.finalPrice).toFixed(2)}
               </span>
               {currentSlide.hasDiscount && (
-                <span className="line-through text-gray-500 text-base md:text-xl font-normal">
+                <span className="line-through text-gray-400 text-lg md:text-2xl font-medium ml-1">
                   ₹{Number(currentSlide.originalPrice).toFixed(2)}
                 </span>
               )}
