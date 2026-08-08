@@ -57,6 +57,7 @@ const SellerDashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   // Category Modal States
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -315,6 +316,23 @@ const SellerDashboard = () => {
   // Calculate seller revenue and sales totals
   const totalSalesRevenue = sellerOrders.reduce((sum, ord) => sum + Number(ord.totalPrice || 0), 0);
 
+  // Calculate potential revenue remaining in active inventory stock (stock * selling price)
+  const remainingPotentialRevenue = products.reduce((sum, item) => {
+    const origP = Number(item.price || 0);
+    const discP = Number(item.discountPrice || 0);
+    const hasDisc = discP > 0 && discP < origP;
+    let sellingPrice = origP;
+    if (hasDisc) {
+      if (discP < (origP / 2)) {
+        sellingPrice = origP - discP;
+      } else {
+        sellingPrice = discP;
+      }
+    }
+    const stockQty = Number(item.stock || 0);
+    return sum + (sellingPrice * stockQty);
+  }, 0);
+
   // Calculate final selling price for Add/Edit Product Modal
   const origPrice = Number(formData.price || 0);
   const discVal = Number(formData.discountPrice || 0);
@@ -371,44 +389,54 @@ const SellerDashboard = () => {
       )}
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
             <FaBoxes />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">My Listed Products</p>
-            <h3 className="text-2xl font-extrabold text-blue-950 mt-1">{products.length}</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">My Listed Products</p>
+            <h3 className="text-xl font-extrabold text-blue-950 mt-0.5">{products.length}</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-blue-100 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
             <FaShoppingBag />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sales Orders Received</p>
-            <h3 className="text-2xl font-extrabold text-blue-950 mt-1">{sellerOrders.length}</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Sales Orders Received</p>
+            <h3 className="text-xl font-extrabold text-blue-950 mt-0.5">{sellerOrders.length}</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-purple-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-purple-100 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
             <FaRupeeSign />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Sales Revenue</p>
-            <h3 className="text-2xl font-extrabold text-blue-950 mt-1">₹{totalSalesRevenue.toFixed(2)}</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Sales Revenue</p>
+            <h3 className="text-xl font-extrabold text-blue-950 mt-0.5">₹{totalSalesRevenue.toFixed(2)}</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-amber-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-teal-100 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl shrink-0">
+            <FaRupeeSign />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Estimated Remaining Revenue</p>
+            <h3 className="text-xl font-extrabold text-teal-800 mt-0.5">₹{remainingPotentialRevenue.toFixed(2)}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-amber-100 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
             <FaFolder />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Store Categories</p>
-            <h3 className="text-2xl font-extrabold text-blue-950 mt-1">{categories.length}</h3>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Store Categories</p>
+            <h3 className="text-xl font-extrabold text-blue-950 mt-0.5">{categories.length}</h3>
           </div>
         </div>
       </div>
@@ -906,10 +934,41 @@ const SellerDashboard = () => {
                 <input
                   type="url"
                   value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, imageUrl: e.target.value });
+                    setImageError(false);
+                  }}
                   placeholder="https://images.unsplash.com/..."
                   className="w-full px-4 py-2.5 bg-blue-50/50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none"
                 />
+                
+                {/* Always Visible Live Image Preview Box */}
+                <div className="mt-2.5 p-2.5 bg-blue-50/50 border border-gray-200/90 rounded-2xl flex items-center gap-3">
+                  {formData.imageUrl && !imageError ? (
+                    <img
+                      src={formData.imageUrl}
+                      alt="Live Preview"
+                      className="w-16 h-16 object-contain rounded-xl bg-white border border-gray-200 p-1 shrink-0 shadow-sm"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-gray-100 border border-gray-200 flex flex-col items-center justify-center text-gray-400 shrink-0 p-1 shadow-inner">
+                      <FaImage className="text-xl text-gray-400 mb-0.5" />
+                      <span className="text-[9px] font-extrabold text-center leading-none text-gray-400">No Image</span>
+                    </div>
+                  )}
+                  <div className="text-xs">
+                    <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${formData.imageUrl && !imageError ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                      {formData.imageUrl && !imageError ? 'Live Image Preview' : 'No Image Found'}
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {formData.imageUrl && !imageError
+                        ? 'Here is how your product image will look in the store catalog and hero slider.'
+                        : 'Paste an image URL above to preview your product image live here.'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div>
