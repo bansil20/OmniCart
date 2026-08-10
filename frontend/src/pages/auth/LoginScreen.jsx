@@ -275,11 +275,17 @@ const LoginScreen = () => {
 
   const handleContinueWithGoogleClick = () => {
     try {
-      loginWithGoogleOAuth();
+      if (typeof loginWithGoogleOAuth === 'function') {
+        loginWithGoogleOAuth();
+      } else {
+        setShowGooglePrompt(true);
+      }
     } catch (err) {
+      console.warn('Google OAuth click notice:', err);
       setShowGooglePrompt(true);
     }
   };
+
 
 
   return (
