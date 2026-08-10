@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Path from '../../utils/const/Path.js';
@@ -27,6 +27,15 @@ const LoginScreen = () => {
   // Tab state: 'login' or 'register'
   const isRegisterPage = location.pathname === Path.REGISTER;
   const [activeTab, setActiveTab] = useState(isRegisterPage ? 'register' : 'login');
+
+  useEffect(() => {
+    if (location.pathname === Path.REGISTER) {
+      setActiveTab('register');
+    } else if (location.pathname === Path.LOGIN) {
+      setActiveTab('login');
+    }
+  }, [location.pathname]);
+
 
   // Form states
   const [name, setName] = useState('');

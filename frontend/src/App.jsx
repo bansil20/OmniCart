@@ -38,8 +38,13 @@ const App = () => {
 
                 <Route
                     path={Path.REGISTER}
-                    element={<LayoutHF />}
+                    element={
+                        <LayoutHF>
+                            <LoginScreen />
+                        </LayoutHF>
+                    }
                 />
+
 
                 {/* Protected Dashboard Routes */}
                 <Route
