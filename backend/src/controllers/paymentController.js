@@ -3,8 +3,9 @@ import crypto from 'crypto';
 
 // Initialize Razorpay Instance
 const getRazorpayInstance = () => {
-  const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_test_OmniCartKey2026';
-  const key_secret = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_OmniCartSecret2026';
+  const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNzWh33ofECeVl';
+  const key_secret = process.env.RAZORPAY_KEY_SECRET || 'KcEVKfAu3z3q3K7fhxEmA0lq';
+
 
   return {
     key_id,
@@ -52,16 +53,13 @@ export const createRazorpayOrder = async (req, res) => {
         message: 'Razorpay Order ID generated successfully',
       });
     } catch (apiError) {
-      // Return simulated Razorpay Order ID for smooth testing when demo key is used
-      return res.json({
-        id: `order_simulated_${Date.now()}`,
-        amount: amountInPaise,
-        currency: 'INR',
-        keyId: key_id,
-        simulated: true,
-        message: 'Razorpay Order ID generated (Test Simulation Mode)',
+      console.error('Razorpay Order Creation API Error:', apiError);
+      return res.status(500).json({
+        message: apiError?.error?.description || apiError?.message || 'Razorpay Order Creation Failed',
+        errorDetails: apiError,
       });
     }
+
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error generating Razorpay Order ID' });
   }

@@ -236,7 +236,7 @@ function CheckoutScreen() {
     }
   };
 
-  // Razorpay Payment Handler
+  // Pure Official Razorpay SDK Payment Handler
   const handleRazorpayPayment = async () => {
     if (cart.length === 0) {
       alert('Your cart is empty.');
@@ -247,7 +247,7 @@ function CheckoutScreen() {
     setValidationError('');
 
     try {
-      // 1. Call backend to create Razorpay Order ID
+      // 1. Call backend to create Razorpay Order ID using real Key ID & Secret
       const res = await fetch(`${API_BASE_URL}/payment/razorpay/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -256,67 +256,83 @@ function CheckoutScreen() {
 
       const orderData = await res.json();
       if (!res.ok || !orderData.id) {
-        throw new Error(orderData.message || 'Error generating Razorpay Order ID');
+        throw new Error(orderData.message || 'Failed to create Razorpay order.');
       }
 
-      // 2. Load official Razorpay SDK
-      let isScriptLoaded = false;
-      try {
-        isScriptLoaded = await new Promise((resolve) => {
-          if (window.Razorpay) return resolve(true);
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.onload = () => resolve(true);
-          script.onerror = () => resolve(false);
-          document.body.appendChild(script);
-        });
-      } catch (e) {
-        isScriptLoaded = false;
+      // 2. Load official Razorpay checkout.js SDK dynamically if not loaded
+      const isScriptLoaded = await new Promise((resolve) => {
+        if (window.Razorpay) return resolve(true);
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+      });
+
+      if (!isScriptLoaded || !window.Razorpay) {
+        alert('Could not load Razorpay payment gateway. Please check your internet connection.');
+        setIsPlacingOrder(false);
+        return;
       }
 
-      if (isScriptLoaded && window.Razorpay && !orderData.simulated) {
-        const options = {
-          key: orderData.keyId,
-          amount: orderData.amount,
-          currency: orderData.currency,
-          name: 'OmniCart E-Commerce',
-          description: 'Secure Payment via Razorpay',
-          order_id: orderData.id,
-          prefill: {
-            name: addressData.fullName || user?.name || '',
-            email: user?.email || 'customer@example.com',
-            contact: addressData.phone || '',
-          },
-          theme: { color: '#2563EB' },
-          handler: async (response) => {
-            const payId = response.razorpay_payment_id || response.razorpay_order_id || `pay_${Date.now()}`;
+      // 3. Configure official Razorpay Checkout options
+      const options = {
+        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TNzWh33ofECeVl',
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'OmniCart E-Commerce',
+        description: 'Order Payment',
+        image: '/omnicart-logo.png',
+        order_id: orderData.id,
+        prefill: {
+          name: addressData.fullName || user?.name || '',
+          email: user?.email || '',
+          contact: addressData.phone || '',
+        },
+        theme: { color: '#2563EB' },
+        handler: async (response) => {
+          try {
+            // Verify HMAC signature with backend
+            const verifyRes = await fetch(`${API_BASE_URL}/payment/razorpay/verify-signature`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              const payId = response.razorpay_payment_id || response.razorpay_order_id;
+              await finalizeOrderPlacement(`Razorpay (Payment ID: ${payId})`);
+            } else {
+              alert('Payment signature verification failed.');
+            }
+          } catch (err) {
+            const payId = response.razorpay_payment_id || `pay_${Date.now()}`;
             await finalizeOrderPlacement(`Razorpay (ID: ${payId})`);
+          } finally {
+            setIsPlacingOrder(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
             setIsPlacingOrder(false);
           },
-          modal: {
-            ondismiss: () => {
-              setIsPlacingOrder(false);
-            },
-          },
-        };
+        },
+      };
 
-        try {
-          const razorpayInstance = new window.Razorpay(options);
-          razorpayInstance.open();
-          return;
-        } catch (rzpErr) {
-          // SDK launch fallback
-        }
-      }
-
-      // Open interactive Razorpay checkout modal
-      setShowRazorpayModal(true);
+      // 4. Open official Razorpay Checkout Overlay
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
     } catch (err) {
-      setShowRazorpayModal(true);
-    } finally {
+      alert(err.message || 'Payment initiation failed. Please try again.');
       setIsPlacingOrder(false);
     }
   };
+
 
   const handlePlaceOrder = async () => {
     if (paymentMethod === 'razorpay') {
@@ -607,7 +623,7 @@ function CheckoutScreen() {
                     setPaymentMethod('razorpay');
                     setValidationError('');
                   }}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
+                  className={`p-5 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
                     paymentMethod === 'razorpay' ? 'border-blue-600 bg-blue-50/60 shadow-sm' : 'border-gray-100 hover:border-gray-200'
                   }`}
                 >
@@ -616,144 +632,15 @@ function CheckoutScreen() {
                     <div className="flex items-center justify-between">
                       <span className="font-extrabold text-sm text-blue-950 flex items-center gap-2">
                         <FaBolt className="text-blue-600" />
-                        <span>Razorpay (UPI, GPay, PhonePe, Cards, NetBanking)</span>
+                        <span>Razorpay (GPay, PhonePe, UPI, Cards, NetBanking)</span>
                       </span>
                       <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                         Recommended
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Fast, instant, and 100% secure payment via Razorpay official checkout gateway.
+                      Fast, instant, and 100% secure payment via official Razorpay checkout gateway.
                     </p>
-                  </div>
-                </label>
-
-                {/* Method Option: Card */}
-                <label
-                  onClick={() => {
-                    setPaymentMethod('card');
-                    setValidationError('');
-                  }}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
-                    paymentMethod === 'card' ? 'border-blue-600 bg-blue-50/40' : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => {}} className="mt-1" />
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-blue-950 flex items-center gap-2">
-                        <FaCreditCard className="text-blue-600" />
-                        <span>Credit / Debit Card</span>
-                      </span>
-                      <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Visa / Mastercard / RuPay</span>
-                    </div>
-
-                    {paymentMethod === 'card' && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <input
-                          type="text"
-                          placeholder="16-Digit Card Number"
-                          maxLength="16"
-                          value={cardDetails.number}
-                          onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value.replace(/\D/g, '') })}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold tracking-wider focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Cardholder Name"
-                          value={cardDetails.name}
-                          onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Expiry (MM/YY)"
-                          maxLength="5"
-                          value={cardDetails.expiry}
-                          onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        <input
-                          type="password"
-                          placeholder="CVV (3 or 4 digits)"
-                          maxLength="4"
-                          value={cardDetails.cvv}
-                          onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, '') })}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </label>
-
-                {/* Method Option: UPI */}
-                <label
-                  onClick={() => {
-                    setPaymentMethod('upi');
-                    setValidationError('');
-                  }}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
-                    paymentMethod === 'upi' ? 'border-blue-600 bg-blue-50/40' : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <input type="radio" name="payment" checked={paymentMethod === 'upi'} onChange={() => {}} className="mt-1" />
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-blue-950 flex items-center gap-2">
-                        <FaMobileAlt className="text-emerald-600" />
-                        <span>UPI / QR Code (Google Pay, PhonePe, Paytm)</span>
-                      </span>
-                      <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">Instant UPI</span>
-                    </div>
-
-                    {paymentMethod === 'upi' && (
-                      <div className="pt-2">
-                        <input
-                          type="text"
-                          placeholder="Enter VPA / UPI ID (e.g. name@upi or mobile@paytm)"
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </label>
-
-                {/* Method Option: Net Banking */}
-                <label
-                  onClick={() => {
-                    setPaymentMethod('netbanking');
-                    setValidationError('');
-                  }}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
-                    paymentMethod === 'netbanking' ? 'border-blue-600 bg-blue-50/40' : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <input type="radio" name="payment" checked={paymentMethod === 'netbanking'} onChange={() => {}} className="mt-1" />
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-blue-950 flex items-center gap-2">
-                        <FaUniversity className="text-indigo-600" />
-                        <span>Net Banking</span>
-                      </span>
-                    </div>
-
-                    {paymentMethod === 'netbanking' && (
-                      <div className="pt-2">
-                        <select
-                          value={selectedBank}
-                          onChange={(e) => setSelectedBank(e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        >
-                          <option value="HDFC Bank">HDFC Bank</option>
-                          <option value="ICICI Bank">ICICI Bank</option>
-                          <option value="State Bank of India">State Bank of India (SBI)</option>
-                          <option value="Axis Bank">Axis Bank</option>
-                          <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
-                        </select>
-                      </div>
-                    )}
                   </div>
                 </label>
 
@@ -763,8 +650,8 @@ function CheckoutScreen() {
                     setPaymentMethod('cod');
                     setValidationError('');
                   }}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
-                    paymentMethod === 'cod' ? 'border-blue-600 bg-blue-50/40' : 'border-gray-100 hover:border-gray-200'
+                  className={`p-5 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
+                    paymentMethod === 'cod' ? 'border-blue-600 bg-blue-50/40 shadow-sm' : 'border-gray-100 hover:border-gray-200'
                   }`}
                 >
                   <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => {}} className="mt-1" />
@@ -773,9 +660,10 @@ function CheckoutScreen() {
                       <FaMoneyBillWave className="text-amber-600" />
                       <span>Cash on Delivery (COD)</span>
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">Pay in cash or via UPI Scanner when your order arrives at doorstep.</p>
+                    <p className="text-xs text-gray-500 mt-1">Pay in cash or via UPI Scanner when your order arrives at your doorstep.</p>
                   </div>
                 </label>
+
 
                 <div className="pt-4 flex justify-between">
                   <button
