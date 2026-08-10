@@ -277,7 +277,8 @@ function CheckoutScreen() {
 
       // 3. Configure official Razorpay Checkout options
       const options = {
-        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TNzWh33ofECeVl',
+        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '',
+
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'OmniCart E-Commerce',

@@ -14,7 +14,8 @@ if ('scrollRestoration' in window.history) {
     window.history.scrollRestoration = 'manual';
 }
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '50233012131-mjfilo6afju30lapagtu6o70lrqnp9bu.apps.googleusercontent.com';
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 
 
 createRoot(document.getElementById('root')).render(
