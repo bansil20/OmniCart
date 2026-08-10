@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Path from '../../utils/const/Path.js';
 import { API_BASE_URL } from '../../config/api.js';
+import { useGoogleLogin, GoogleLogin } from '@react-oauth/google';
+
 import {
   FaUser,
   FaEnvelope,
@@ -200,15 +202,32 @@ const LoginScreen = () => {
     }
   };
 
+  // Decode JWT payload helper for Google ID Token
+  const decodeJwtPayload = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (err) {
+      return null;
+    }
+  };
+
   // Direct Google Sign-In Trigger
-  const handleGoogleAuth = async (selectedEmail, selectedName) => {
+  const handleGoogleAuth = async (selectedEmail, selectedName, selectedAvatar, googleId) => {
     setIsSubmitting(true);
     setAuthError(null);
     try {
       const gEmail = selectedEmail || email || 'customer.google@gmail.com';
       const gName = selectedName || name || gEmail.split('@')[0];
-      const gId = `google_${Date.now()}`;
-      const gAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${gEmail}`;
+      const gId = googleId || `google_${Date.now()}`;
+      const gAvatar = selectedAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${gEmail}`;
 
       const result = await googleLogin({
         name: gName,
@@ -227,6 +246,41 @@ const LoginScreen = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Google OAuth flow via @react-oauth/google
+  const loginWithGoogleOAuth = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setIsSubmitting(true);
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const userInfo = await res.json();
+        if (userInfo && userInfo.email) {
+          await handleGoogleAuth(userInfo.email, userInfo.name, userInfo.picture, userInfo.sub);
+        } else {
+          setAuthError('Could not retrieve account details from Google.');
+        }
+      } catch (err) {
+        setAuthError('Google sign in process failed.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    onError: (errorResponse) => {
+      console.warn('Google OAuth login notice:', errorResponse);
+      setShowGooglePrompt(true);
+    },
+  });
+
+  const handleContinueWithGoogleClick = () => {
+    try {
+      loginWithGoogleOAuth();
+    } catch (err) {
+      setShowGooglePrompt(true);
+    }
+  };
+
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -251,22 +305,20 @@ const LoginScreen = () => {
           <button
             type="button"
             onClick={() => switchTab('login')}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
-              activeTab === 'login'
-                ? 'bg-white text-blue-900 shadow-sm'
-                : 'text-gray-500 hover:text-blue-700'
-            }`}
+            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === 'login'
+              ? 'bg-white text-blue-900 shadow-sm'
+              : 'text-gray-500 hover:text-blue-700'
+              }`}
           >
             Sign In
           </button>
           <button
             type="button"
             onClick={() => switchTab('register')}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
-              activeTab === 'register'
-                ? 'bg-white text-blue-900 shadow-sm'
-                : 'text-gray-500 hover:text-blue-700'
-            }`}
+            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === 'register'
+              ? 'bg-white text-blue-900 shadow-sm'
+              : 'text-gray-500 hover:text-blue-700'
+              }`}
           >
             Register
           </button>
@@ -402,13 +454,7 @@ const LoginScreen = () => {
         {/* Google Direct Sign-In / Register Button */}
         <button
           type="button"
-          onClick={() => {
-            if (email && email.includes('@')) {
-              handleGoogleAuth(email, name);
-            } else {
-              setShowGooglePrompt(true);
-            }
-          }}
+          onClick={handleContinueWithGoogleClick}
           className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-gray-300 rounded-xl shadow-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm cursor-pointer"
         >
           <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -431,6 +477,8 @@ const LoginScreen = () => {
           </svg>
           <span>Continue with Google</span>
         </button>
+
+
 
         {/* Footer switch prompt */}
         <div className="text-center pt-2">

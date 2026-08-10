@@ -20,30 +20,46 @@ const App = () => {
             id="main-scroll"
             className='h-screen overflow-y-scroll no-scrollbar bg-blue-50'>
             <Routes>
-                <Route element={ <LayoutHF children={ <HomeScreen/>}/> } path={Path.HOME_SCREEN} />
-                <Route element={ <LayoutHF screenName='Compare Screen' tagLine='Compare Smarter, Buy Faster' children={ <CompareScreen/>}/> } path={Path.COMPARE_SCREEN} />
-                <Route element={ <LayoutHF screenName='Wishlist Screen' tagLine='Your Saved Favorites' children={ <WishlistScreen/>}/> } path={Path.WISHLIST_SCREEN} />
-                <Route element={ <LayoutHF screenName='Checkout Screen' tagLine='Secure Checkout & Payment' children={ <CheckoutScreen/>}/> } path={Path.CHECKOUT_SCREEN} />
-                <Route element={ <LayoutHF screenName='Order History' tagLine='Your Past Purchases & Invoices' children={ <OrderHistoryScreen/>}/> } path={Path.ORDER_HISTORY} />
-                <Route element={ <LayoutHF screenName='Shop Screen' tagLine='All Categories. One Place.' children={ <ShopScreen/>}/> } path={Path.SHOP_SCREEN} />
-                <Route element={ <LayoutHF screenName='Item Screen' tagLine='Everything About This Item' children={ <ItemScreen/>}/> } path={Path.ITEM_DETAIL} />
-                <Route element={ <LayoutHF children={ <LoginScreen/>}/> } path={Path.LOGIN} />
-                <Route element={ <LayoutHF children={ <LoginScreen/>}/> } path={Path.REGISTER} />
-                
+                <Route element={<LayoutHF children={<HomeScreen />} />} path={Path.HOME_SCREEN} />
+                <Route element={<LayoutHF screenName='Compare Screen' tagLine='Compare Smarter, Buy Faster' children={<CompareScreen />} />} path={Path.COMPARE_SCREEN} />
+                <Route element={<LayoutHF screenName='Wishlist Screen' tagLine='Your Saved Favorites' children={<WishlistScreen />} />} path={Path.WISHLIST_SCREEN} />
+                <Route element={<LayoutHF screenName='Checkout Screen' tagLine='Secure Checkout & Payment' children={<CheckoutScreen />} />} path={Path.CHECKOUT_SCREEN} />
+                <Route element={<LayoutHF screenName='Order History' tagLine='Your Past Purchases & Invoices' children={<OrderHistoryScreen />} />} path={Path.ORDER_HISTORY} />
+                <Route element={<LayoutHF screenName='Shop Screen' tagLine='All Categories. One Place.' children={<ShopScreen />} />} path={Path.SHOP_SCREEN} />
+                <Route element={<LayoutHF screenName='Item Screen' tagLine='Everything About This Item' children={<ItemScreen />} />} path={Path.ITEM_DETAIL} />
+                <Route
+                    path={Path.LOGIN}
+                    element={
+                        <LayoutHF>
+                            <LoginScreen />
+                        </LayoutHF>
+                    }
+                />
+
+                <Route
+                    path={Path.REGISTER}
+                    element={<LayoutHF />}
+                />
+
                 {/* Protected Dashboard Routes */}
                 <Route
                     path={Path.ADMIN_DASHBOARD}
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
-                            <LayoutHF children={<AdminDashboard />} />
+                            <LayoutHF>
+                                <AdminDashboard />
+                            </LayoutHF>
                         </ProtectedRoute>
                     }
                 />
+
                 <Route
                     path={Path.SELLER_DASHBOARD}
                     element={
                         <ProtectedRoute allowedRoles={['seller', 'admin']}>
-                            <LayoutHF children={<SellerDashboard />} />
+                            <LayoutHF>
+                                <SellerDashboard />
+                            </LayoutHF>
                         </ProtectedRoute>
                     }
                 />
